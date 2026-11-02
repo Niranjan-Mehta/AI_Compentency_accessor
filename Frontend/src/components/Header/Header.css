@@ -1,0 +1,143 @@
+/* Header Component Styles */
+
+.top-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  background-color: #2563eb;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 64px;
+}
+
+.nav-tab-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.nav-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.nav-tab-btn.active {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.nav-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #2563eb;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-info {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.user-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.avatar-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #1e3a5f;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logout-btn {
+  width: 32px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logout-btn:hover {
+  background-color: #f8fafc;
+  color: var(--text-main);
+  border-color: #2563eb;
+}
+

@@ -1,0 +1,241 @@
+/* DashboardView Component Styles */
+
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.level-segments-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.level-segment {
+  height: 8px;
+  flex: 1;
+  border-radius: 4px;
+}
+
+.level-segment.filled {
+  background-color: #0284c7;
+}
+
+.level-segment.empty {
+  border: 1.5px solid var(--border-color);
+  background-color: #f0f9ff;
+}
+
+/* Section Box / Tasks Container */
+.section-card {
+  background-color: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Tab Filter Pills */
+.filter-tabs-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #e2e8f0;
+  padding: 3px;
+  border-radius: var(--radius-full);
+}
+
+.filter-pill-btn {
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-body);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pill-btn.active {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.filter-pill-btn:not(.active):hover {
+  color: #0f172a;
+}
+
+/* Data Table */
+.tasks-table-container {
+  overflow-x: auto;
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.tasks-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tasks-table th:last-child {
+  text-align: right;
+}
+
+.tasks-table td {
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.tasks-table tr:last-child td {
+  border-bottom: none;
+}
+
+.task-name-text {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.skill-name-text {
+  color: var(--text-body);
+}
+
+.due-date-text {
+  color: var(--text-body);
+}
+
+/* Badges & Status Pills */
+.badge-warning-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f59e0b;
+  color: #000000;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.status-pill.not-submitted {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  color: #334155;
+}
+
+.status-pill.questions-ready {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.status-pill.processing {
+  background-color: transparent;
+  border: 1px dashed #0284c7;
+  color: #0369a1;
+}
+
+.status-pill.under-review {
+  background-color: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #b45309;
+}
+
+.status-pill.published {
+  background-color: #16a34a;
+  color: #ffffff;
+}
+
+/* Table Action Buttons */
+.btn-table-action-primary {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-table-action-primary:hover {
+  background-color: #1e293b;
+}
+
+.btn-table-action-secondary {
+  background-color: #ffffff;
+  color: #0f172a;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-table-action-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #2563eb;
+}
+
+.table-action-text {
+  font-size: 12px;
+  color: var(--text-body);
+}
+
+.table-link-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.table-link-action:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 992px) {
+  .stat-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

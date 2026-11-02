@@ -1,0 +1,53 @@
+# Local environment files (keep sample templates versionable)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Python and Django
+**/venv/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+
+# Local databases and backups
+*.sqlite3
+*.sqlite3-*
+*.backup*
+*.phase*-backup*
+
+# Local application data and generated processing/test data
+**/chroma_data/
+**/media/
+**/repository_work/
+Backend/.phase4-test-*/
+Backend/.phase4-test-work-*/
+Backend/assessor-submission-tests-*/
+**/test-output/
+
+# Node, Vite and frontend build output
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/.vite/
+**/.cache/
+
+# Logs and operating-system/editor artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/

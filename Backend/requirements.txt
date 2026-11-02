@@ -1,0 +1,8 @@
+Django==6.1.2
+djangorestframework==3.18.3
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+python-dotenv==1.2.4
+chromadb==1.5.9
+PyMuPDF==2.0
+google-genai==2.33.0

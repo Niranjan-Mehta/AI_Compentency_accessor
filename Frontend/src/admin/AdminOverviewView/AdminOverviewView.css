@@ -1,0 +1,466 @@
+/* AdminOverviewView Component Styles */
+
+.admin-overview-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
+}
+
+/* Header Action Row */
+.admin-overview-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-overview-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-overview-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.admin-overview-subtitle {
+  font-size: 14px;
+  color: #475569;
+  margin: 0;
+  font-weight: 400;
+}
+
+.admin-overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-btn-secondary {
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-color, #60a5fa);
+  color: #0f172a;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.admin-btn-primary {
+  background-color: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.admin-btn-primary:hover {
+  background-color: #1e293b;
+}
+
+/* 4-Stat Cards Grid */
+.admin-stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-card {
+  background: #ffffff;
+  border: 1.5px solid var(--border-color, #60a5fa);
+  border-radius: 8px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.admin-stat-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.admin-stat-card-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.admin-stat-card-desc {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* 2-Column Section Layout */
+.admin-overview-columns-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Left Column: Needs your decision */
+.admin-section-box {
+  background: #ffffff;
+  border: 1.5px solid var(--border-color, #60a5fa);
+  border-radius: 8px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.admin-section-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 18px 0;
+  letter-spacing: -0.01em;
+}
+
+.admin-decision-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-decision-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-decision-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.admin-decision-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Status Pills in Decisions */
+.admin-decision-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.admin-decision-pill.ready-to-publish {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #0284c7;
+}
+
+.admin-decision-pill.dispute {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.admin-decision-pill.override {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.admin-decision-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.admin-decision-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.admin-decision-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Action button in decision item */
+.admin-decision-action-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.admin-decision-action-btn.dark {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+}
+
+.admin-decision-action-btn.dark:hover {
+  background-color: #1e293b;
+}
+
+.admin-decision-action-btn.outline {
+  background-color: #ffffff;
+  color: #0f172a;
+  border: 1.5px solid var(--border-color, #60a5fa);
+}
+
+.admin-decision-action-btn.outline:hover {
+  background-color: #f8fafc;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* Right Column: Your batches */
+.admin-batches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-batch-card-item {
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-batch-card-item:hover {
+  background-color: #f1f5f9;
+  border-color: var(--border-color, #60a5fa);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+}
+
+.admin-batch-header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-batch-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-batch-chevron {
+  color: #64748b;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-batch-subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.admin-batch-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.admin-batch-progress-track {
+  flex: 1;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.admin-batch-progress-fill {
+  height: 100%;
+  background-color: #2563eb;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.admin-batch-progress-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* Simple Modal Styles for Overview Actions */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.admin-modal-dialog {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color, #60a5fa);
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.admin-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.admin-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-modal-close-btn:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.admin-modal-desc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.admin-modal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.admin-modal-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.admin-modal-input,
+.admin-modal-select,
+.admin-modal-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border-color, #60a5fa);
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #0f172a;
+  box-sizing: border-box;
+  background: #ffffff;
+  outline: none;
+}
+
+.admin-modal-input:focus,
+.admin-modal-select:focus,
+.admin-modal-textarea:focus {
+  border-color: #2563eb;
+}
+
+.admin-modal-buttons-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .admin-stat-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-overview-columns-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-stat-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-overview-container {
+    padding: 16px;
+  }
+}

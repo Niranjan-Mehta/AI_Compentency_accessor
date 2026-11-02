@@ -1,0 +1,10 @@
+import React, { useEffect, useState } from 'react';
+import { useApp } from '../../context/AppContext.jsx';
+
+export function EvaluationFeedbackView({ onNavigate }) {
+  const { activeAssessmentRunId, api, setAppError } = useApp(); const [evaluation, setEvaluation] = useState(null);
+  useEffect(() => { if (activeAssessmentRunId) api.request(`/assessment-runs/${activeAssessmentRunId}/evaluation/`).then(setEvaluation).catch((error) => setAppError(error.message)); }, [activeAssessmentRunId]);
+  if (!activeAssessmentRunId) return <main className="main-wrapper"><h1 className="page-title">Assessment feedback</h1><p>No assessment is selected.</p><button className="btn-secondary-cancel" onClick={() => onNavigate('dashboard')}>Back</button></main>;
+  if (!evaluation) return <main className="main-wrapper"><p>Loading feedback…</p></main>;
+  return <main className="main-wrapper"><nav className="breadcrumb-nav"><button className="breadcrumb-link" onClick={() => onNavigate('dashboard')}>Dashboard</button><span>› Assessment feedback</span></nav><h1 className="page-title">Your assessment feedback</h1><p className="page-subtitle">Status: {evaluation.status} · Review: {evaluation.review_status}</p><section className="section-card" style={{ padding: 20 }}><h2>{evaluation.overall_final_score ?? evaluation.overall_ai_score}% · {evaluation.overall_final_level || evaluation.overall_ai_level}</h2>{evaluation.criteria?.map((criterion) => <article key={criterion.criterion_id} style={{ padding: 12, borderTop: '1px solid #e2e8f0' }}><strong>{criterion.criterion_name}</strong> · {criterion.score}/{criterion.max_score} ({criterion.level})</article>)}{evaluation.evaluations?.map((item) => <article key={item.question_id} style={{ padding: 12, borderTop: '1px solid #e2e8f0' }}><strong>{item.question}</strong><p>Your answer: {item.answer_text}</p><p>{item.explanation}</p><p>{item.strengths?.join(' · ')}</p><p>Next: {item.recommendations?.join(' · ')}</p></article>)}</section><button style={{ marginTop: 16 }} className="btn-secondary-cancel" onClick={() => onNavigate('dashboard')}>Back to dashboard</button></main>;
+}

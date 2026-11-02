@@ -1,0 +1,7 @@
+{
+  "name": "Competency Assessor Dashboard",
+  "description": "Comprehensive competency assessment dashboard with task workflows, code submissions, interactive rubric questions, and skill evaluation reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
