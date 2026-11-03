@@ -16,12 +16,10 @@ export const DashboardView = ({ onNavigate }) => {
     averageScore,
     setActiveTaskId,
     setActiveReportId,
-    setActiveAssessmentRunId,
     setSubmissionModalTask,
+    refreshWorkspace,
     startQuestionGeneration,
     startProcessing,
-    loadQuestionsForTask,
-    refreshWorkspace,
     setAppError
   } = useApp();
 
@@ -35,34 +33,29 @@ export const DashboardView = ({ onNavigate }) => {
     return true;
   });
 
-  const handleAction = async (task) => {
-    setAppError('');
+  const handleAction = (task) => {
     if (task.actionType === 'submit') {
       setActiveTaskId(task.id);
       onNavigate('submit-work');
     } else if (task.actionType === 'questions') {
       setActiveTaskId(task.id);
-      try {
-        if (task.submission?.status === 'QUESTIONS_READY' && task.assessmentRunId) { await loadQuestionsForTask(task.id); onNavigate('code-questions'); }
-        else {
-          await startQuestionGeneration(task.id);
-          await refreshWorkspace();
-        }
-      } catch (error) { setAppError(error.message); }
+      if (task.actionLabel.toLowerCase().includes('generate')) {
+        startQuestionGeneration(task.id).catch((error) => setAppError(error.message));
+      } else {
+        onNavigate('code-questions');
+      }
     } else if (task.actionType === 'view-report') {
-      setActiveReportId(task.reportId);
+      setActiveReportId(task.reportId || 'report-ticket-api');
       onNavigate('report-detail');
     } else if (task.actionType === 'view-submission') {
-      if (task.assessmentRunId) {
-        setActiveAssessmentRunId(task.assessmentRunId);
-        onNavigate('evaluation-feedback');
-      } else setSubmissionModalTask(task);
-    } else if (task.actionType === 'retry-processing') {
-      try { await startProcessing(task.id); } catch (error) { setAppError(error.message); }
-    } else if (task.actionType === 'retry-evaluation') {
-      try { await loadQuestionsForTask(task.id); onNavigate('code-questions'); } catch (error) { setAppError(error.message); }
+      setSubmissionModalTask(task);
     } else if (task.actionType === 'processing-time') {
-      try { await refreshWorkspace(); } catch (error) { setAppError(error.message); }
+      refreshWorkspace();
+    } else if (task.actionType === 'retry-processing') {
+      startProcessing(task.id).catch((error) => setAppError(error.message));
+    } else if (task.actionType === 'retry-evaluation') {
+      setActiveTaskId(task.id);
+      onNavigate('code-questions');
     }
   };
 
@@ -101,12 +94,12 @@ export const DashboardView = ({ onNavigate }) => {
         {/* Card 3: Current level */}
         <div className="stat-card">
           <div className="stat-card-title">Current level</div>
-          <div className="stat-card-value">{currentUser.level || '—'}</div>
+          <div className="stat-card-value">{currentUser.level}</div>
           <div className="stat-card-desc">
-            {currentUser.levelName || 'Not yet rated'}. {currentUser.nextLevel ? `Next: ${currentUser.nextLevel}` : ''}
+            {currentUser.levelName}. Next: {currentUser.nextLevel}
           </div>
           <div className="level-segments-bar">
-            {Array.from({ length: currentUser.totalSegments || 4 }).map((_, idx) => (
+            {Array.from({ length: currentUser.totalSegments }).map((_, idx) => (
               <div
                 key={idx}
                 className={`level-segment ${idx < currentUser.completedSegments ? 'filled' : 'empty'}`}
@@ -157,7 +150,7 @@ export const DashboardView = ({ onNavigate }) => {
               </tr>
             </thead>
             <tbody>
-                {filteredTasks.map((task) => (
+              {filteredTasks.map((task) => (
                 <tr key={task.id}>
                   {/* Task name */}
                   <td>
@@ -207,7 +200,7 @@ export const DashboardView = ({ onNavigate }) => {
                     {task.status === 'processing' && (
                       <span 
                         className="status-pill processing"
-                        title="Refresh processing status"
+                        title="Click to fast-forward assessment"
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleAction(task)}
                       >
@@ -264,7 +257,7 @@ export const DashboardView = ({ onNavigate }) => {
                     {task.actionType === 'processing-time' && (
                       <span 
                         className="table-action-text" 
-                        title="Refresh processing status"
+                        title="Click to simulate completion" 
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleAction(task)}
                       >
@@ -289,18 +282,9 @@ export const DashboardView = ({ onNavigate }) => {
                         {task.actionLabel}
                       </button>
                     )}
-
-                    {task.actionType === 'retry-processing' && (
-                      <button className="btn-table-action-secondary" onClick={() => handleAction(task)}>{task.actionLabel}</button>
-                    )}
-
-                    {task.actionType === 'retry-evaluation' && (
-                      <button className="btn-table-action-secondary" onClick={() => handleAction(task)}>{task.actionLabel}</button>
-                    )}
                   </td>
                 </tr>
               ))}
-                {filteredTasks.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>{tasks.length ? 'No tasks match this filter.' : 'No tasks have been assigned to you yet.'}</td></tr>}
             </tbody>
           </table>
         </div>

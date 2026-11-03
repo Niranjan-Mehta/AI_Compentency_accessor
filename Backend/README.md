@@ -72,3 +72,27 @@ python manage.py check
 - Temporary repository worktrees: `Backend/repository_work/` by default (`REPOSITORY_WORK_ROOT` overrides it).
 
 These locations can contain sensitive assessment or user data; keep them out of version control and include them in an appropriate backup/retention plan. Background processing currently uses in-process workers and is not durable across application restarts.
+# Local demo data
+
+For a local development database, create the demo workflow with:
+
+```powershell
+cd Backend
+.\venv\Scripts\python.exe manage.py seed_demo_data
+```
+
+The command refuses to run when `DEBUG` is false. It is intentionally explicit instead of running from Django startup: startup hooks can execute during tests, migrations, or in every web worker. The command uses the `demo_` username namespace, creates only missing rows, and preserves the fields and relationships of already existing batches, tasks, and submissions. Run it against a local development database only; it does not reset the database.
+
+Newly created demo accounts use the temporary local-only password `LocalDemo-2026!`. Their usernames and emails are:
+
+| Role | Username | Email |
+| --- | --- | --- |
+| Faculty | `demo_faculty` | `demo_faculty@example.test` |
+| TA | `demo_ta1`, `demo_ta2`, `demo_ta3` | `demo_ta1@example.test`, etc. |
+| Trainee | `demo_trainee1_1` through `demo_trainee3_3` | Matching `@example.test` addresses |
+
+An existing account with one of these usernames is left unchanged, including its password and active status. If a reserved demo username already exists with a different role, the command stops. Therefore the listed password is guaranteed only for accounts created by the command, and these credentials must never be deployed.
+
+The demo workflow includes three batches, assigned TAs and trainees, active rubric criteria with L1–L4 descriptions, tasks, two sample submissions, generated questions, saved answers, evaluation and review records, and one draft plus one published report. The sample repository is a public test URL; processing still requires a working repository provider and AI/embedding configuration.
+
+The read-only audit endpoint is available at `/api/audit-events/`. Faculty see events for their batches and their own unassigned events; TAs see events for assigned batches; trainees cannot access the endpoint.

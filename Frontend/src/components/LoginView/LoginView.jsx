@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import './LoginView.css';
 import { useApp } from '../../context/AppContext.jsx';
 
-export function LoginView() {
+export function LoginView({ onLoginSuccess }) {
   const { login, loading } = useApp();
+  // Default identifier is blank as requested
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  // Warning & attempts state
+  const [hasError, setHasError] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   // Monitor Caps Lock key
   const handleKeyActivity = (e) => {
@@ -19,13 +22,18 @@ export function LoginView() {
     }
   };
 
+  // Submit Handler with Role-Based Authentication
   const handleSignIn = async (e) => {
     e?.preventDefault();
-    setErrorMessage('');
+
     try {
-      await login(identifier.trim(), password, keepSignedIn);
+      const user = await login(identifier.trim(), password, keepSignedIn);
+      setHasError(false);
+      setLoginError('');
+      onLoginSuccess?.(user);
     } catch (error) {
-      setErrorMessage(error.message || 'Sign in failed. Check your credentials and try again.');
+      setHasError(true);
+      setLoginError(error.message || 'Unable to sign in. Check your credentials and try again.');
     }
   };
 
@@ -78,7 +86,7 @@ export function LoginView() {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
               </div>
-              <span>Private, access-controlled assessment workspace</span>
+              <span>Private, nothing leaves the network</span>
             </div>
           </div>
         </div>
@@ -98,7 +106,7 @@ export function LoginView() {
           </p>
 
           {/* Warning / Error Banner matching IMG_20261011_160521_150c5318.jpg */}
-          {errorMessage && (
+          {hasError && (
             <div className="login-warning-banner">
               <div className="login-warning-icon-badge">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.8">
@@ -109,10 +117,10 @@ export function LoginView() {
               </div>
               <div className="login-warning-content">
                 <span className="login-warning-title">
-                  Sign in failed
+                  Login failed
                 </span>
                 <span className="login-warning-desc">
-                  {errorMessage}
+                  {loginError}
                 </span>
               </div>
             </div>
@@ -196,7 +204,9 @@ export function LoginView() {
               <button
                 type="button"
                 className="login-forgot-link"
-                onClick={() => setErrorMessage('Contact your faculty member to reset your account credentials.')}
+                onClick={() => {
+                  alert('Password reset is not configured. Contact your system administrator.');
+                }}
               >
                 Forgot password?
               </button>

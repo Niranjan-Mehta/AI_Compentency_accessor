@@ -3,50 +3,57 @@ import './SubmitWorkView.css';
 import { useApp } from '../../context/AppContext.jsx';
 
 export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
-  const { tasks, activeTaskId, submitWork } = useApp();
+  const { tasks, activeTaskId, submitWork, currentUser } = useApp();
 
   const currentTask = tasks.find((t) => t.id === activeTaskId) || tasks[0];
 
   const [repoUrl, setRepoUrl] = useState('');
   const [branch, setBranch] = useState(currentTask?.branch || 'main');
   const [file, setFile] = useState(null);
-  const [error, setError] = useState('');
+  const [hasPdf, setHasPdf] = useState(false);
+  const [pdfName, setPdfName] = useState('');
+  const [pdfMeta, setPdfMeta] = useState('');
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (currentTask) {
       setBranch(currentTask.branch || 'main');
+      setHasPdf(false);
       setFile(null);
+      setPdfName('');
     }
   }, [currentTask]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isConfirmed) {
-      setError('Confirm that this is your own work before submitting.');
+      alert('Please check the confirmation box: "I confirm this is my own work".');
       return;
     }
-    if (!repoUrl.trim()) { setError('Enter the public Git repository URL.'); return; }
-    if (currentTask?.require_pdf && !file) { setError('A PDF is required for this task.'); return; }
-    setError('');
+    if (!repoUrl.trim()) { alert('Enter your Git repository URL.'); return; }
+    if (currentTask.require_pdf && !file) { alert('Choose the required project PDF.'); return; }
     setIsSubmitting(true);
     try {
-      await submitWork(currentTask.id, { repoUrl: repoUrl.trim(), branch: branch.trim() || 'main', file });
-      if (onSubmitSuccess) {
-        onSubmitSuccess();
-      }
+      await submitWork(currentTask.id, { repoUrl, branch, file });
+      onSubmitSuccess?.();
       onNavigate('dashboard');
-    } catch (err) { setError(err.message); }
+    } catch (error) { alert(error.message || 'Submission failed.'); }
     finally { setIsSubmitting(false); }
   };
 
   const handleFileUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setPdfName(file.name);
       setFile(file);
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setPdfMeta(`${sizeMb} MB, document readable`);
+      setHasPdf(true);
     }
   };
+
+  if (!currentTask) return <div className="main-wrapper"><nav className="breadcrumb-nav"><span className="breadcrumb-link" onClick={() => onNavigate('dashboard')}>Dashboard</span><span className="breadcrumb-separator">&gt;</span><span className="breadcrumb-current">Submit your work</span></nav><h1 className="page-title">Submit your work</h1><p className="page-subtitle">There are no active tasks available for submission.</p><button className="btn-secondary-cancel" onClick={() => onNavigate('dashboard')}>Back to dashboard</button></div>;
 
   return (
     <div className="main-wrapper">
@@ -84,7 +91,7 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
           {/* Gitea repository URL */}
           <div className="form-group">
             <label className="form-label" htmlFor="gitea-repo-input">
-              Public Git repository URL
+              Git repository URL
             </label>
             <input 
               id="gitea-repo-input"
@@ -92,13 +99,13 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
               className="text-input-field" 
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="https://git.example.org/your-name/repo"
+              placeholder="https://gitea.internal/your-name/repo"
             />
             <div className="input-status-note">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              <span>{repoUrl ? `Repository linked. Target branch: ${branch} on ${repoUrl}` : `Target branch: ${branch}`}</span>
+              <span>{repoUrl ? `Repository URL entered. Target branch: ${branch}` : `Target branch: ${branch}`}</span>
             </div>
           </div>
 
@@ -107,22 +114,26 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
             <label className="form-label" htmlFor="branch-select">
               Branch
             </label>
-            <input
+            <select 
               id="branch-select"
-              className="text-input-field"
+              className="select-dropdown"
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
-              required
-            />
+            >
+              <option value="main">main</option>
+              <option value="feature/ticket-views">feature/ticket-views</option>
+              <option value="feature/jwt-auth">feature/jwt-auth</option>
+              <option value="dev">dev</option>
+            </select>
           </div>
 
           {/* Learning document (PDF) */}
           <div className="form-group">
             <label className="form-label">
-              Learning document (PDF) {currentTask?.require_pdf ? '(required)' : '(optional)'}
+              Learning document (PDF)
             </label>
 
-            {file && (
+            {hasPdf && (
               <div className="uploaded-file-card">
                 <div className="uploaded-file-left">
                   <div className="file-icon-box">
@@ -132,8 +143,8 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
                     </svg>
                   </div>
                   <div>
-                    <div className="uploaded-file-name">{file.name}</div>
-                    <div className="uploaded-file-meta">{(file.size / (1024 * 1024)).toFixed(1)} MB · selected for upload</div>
+                    <div className="uploaded-file-name">{pdfName}</div>
+                    <div className="uploaded-file-meta">{pdfMeta}</div>
                   </div>
                 </div>
 
@@ -143,11 +154,11 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                    <button
+                  <button 
                     type="button" 
                     className="btn-remove-file" 
                     title="Remove PDF"
-                    onClick={() => setFile(null)}
+                    onClick={() => setHasPdf(false)}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -178,7 +189,7 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
                 Drag your PDF here or <span className="dropzone-link">browse files</span>
               </div>
               <div className="dropzone-subtext">
-                PDF only, up to 10 MB. Export from your editor; scanned pages cannot be read.
+                {currentTask?.require_pdf ? 'PDF required. Up to 10 MB. Scanned pages cannot be read.' : 'PDF optional for this task. Up to 10 MB.'}
               </div>
             </label>
           </div>
@@ -215,7 +226,6 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
               Cancel
             </button>
           </div>
-          {error && <p role="alert" style={{ color: '#b91c1c' }}>{error}</p>}
         </form>
 
         {/* Right Info Column */}
@@ -238,7 +248,7 @@ export const SubmitWorkView = ({ onNavigate, onSubmitSuccess }) => {
               </div>
               <div className="checklist-item">
                 <span className="checklist-check-icon">✓</span>
-                <span>You can resubmit until the due date</span>
+                <span>{currentTask.allow_resubmission ? 'Resubmission is enabled until the due date' : 'Resubmission is disabled for this task'}</span>
               </div>
             </div>
           </div>

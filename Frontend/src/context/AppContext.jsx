@@ -9,6 +9,12 @@ function profileView(profile) {
     ...profile,
     fullName,
     name: profile.first_name || fullName.split(' ')[0],
+    roleLabel: profile.role === 'TA' ? 'Teaching Assistant' : profile.role === 'FACULTY' ? 'Faculty' : 'Trainee',
+    level: profile.level || '—',
+    levelName: profile.level ? `Competency ${profile.level}` : 'Not yet rated',
+    nextLevel: profile.level === 'L4' ? 'Highest level' : 'Keep building skills',
+    completedSegments: Number(String(profile.level || '').slice(1)) || 0,
+    totalSegments: 4,
     avatar: fullName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
   };
 }
@@ -99,16 +105,27 @@ export const AppProvider = ({ children }) => {
     setAppError('');
     try {
       const [batchRows, taskRows, submissionRows, reportRows, assessmentRows, rubricRows] = await Promise.all([
-        api.all('/batches/').catch(() => []),
+        api.all('/batches/'),
         role === 'TRAINEE' ? api.all('/tasks/assigned-to-trainee/')
           : role === 'TA' ? api.all('/tasks/assigned-to-ta/') : api.all('/tasks/'),
-        api.all('/submissions/').catch(() => []),
-        api.all('/reports/').catch(() => []),
-        api.all('/assessment-runs/').catch(() => []),
-        role === 'FACULTY' ? api.all('/rubrics/').catch(() => []) : Promise.resolve([]),
+        api.all('/submissions/'),
+        api.all('/reports/'),
+        api.all('/assessment-runs/'),
+        role === 'FACULTY' ? api.all('/rubrics/') : Promise.resolve([]),
       ]);
 
-      const reportsMap = Object.fromEntries(reportRows.map((report) => [report.id, report]));
+      const reportsMap = Object.fromEntries(reportRows.map((report) => [report.id, {
+        ...report,
+        taskName: report.task_title || report.snapshot?.task?.title || 'Assessment report',
+        overallScore: Number(report.overall_score || 0),
+        level: report.competency_level || report.snapshot?.competency_level || '—',
+        reviewedBy: report.published_by ? 'Faculty' : 'Teaching Assistant',
+        criteria: (report.snapshot?.criteria || []).map((criterion) => ({
+          id: criterion.criterion_id, name: criterion.name,
+          score: Number(criterion.score || 0), maxScore: criterion.max_score,
+          level: criterion.level, feedback: criterion.feedback || [],
+        })),
+      }]));
       let decoratedTasks = taskRows.map((task) => {
         const submission = submissionRows.find((item) => item.task?.id === task.id && item.is_active !== false);
         const report = reportRows.find((item) => item.task_id === task.id && item.status === 'PUBLISHED');
@@ -285,7 +302,7 @@ export const AppProvider = ({ children }) => {
     return result;
   };
 
-  const getReport = (reportId) => reports[reportId] || Object.values(reports)[0] || null;
+  const getReport = (reportId) => reports[reportId] || Object.values(reports).find((report) => report.status === 'PUBLISHED') || null;
   const todoCount = todoTasks.length;
   const doneCount = doneTasks.length;
   const value = {

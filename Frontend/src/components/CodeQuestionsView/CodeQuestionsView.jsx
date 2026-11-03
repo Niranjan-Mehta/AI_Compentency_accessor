@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import './CodeQuestionsView.css';
 import { useApp } from '../../context/AppContext.jsx';
 
@@ -9,13 +9,11 @@ export const CodeQuestionsView = ({ onNavigate }) => {
     getQuestionsForTask,
     updateQuestion,
     saveQuestionDraft,
-    submitAllQuestions,
-    loadQuestionsForTask,
-    setAppError,
+    submitAllQuestions
   } = useApp();
 
   const currentTask = tasks.find((t) => t.id === activeTaskId) || tasks.find((t) => t.status === 'questions-ready');
-  const questions = getQuestionsForTask(currentTask?.id) || [];
+  const questions = currentTask ? getQuestionsForTask(currentTask.id) : [];
 
   // Default to question 2 (index 1) or first unsaved
   const [currentIndex, setCurrentIndex] = useState(() => {
@@ -23,12 +21,7 @@ export const CodeQuestionsView = ({ onNavigate }) => {
     return firstUnsavedIdx !== -1 ? firstUnsavedIdx : 0;
   });
 
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { if (currentTask?.submission && !questions.length) loadQuestionsForTask(currentTask.id).catch((error) => setAppError(error.message)); }, [currentTask?.id]);
-
   const currentQ = questions[currentIndex] || questions[0];
-  if (!currentTask) return <div className="main-wrapper"><h1 className="page-title">Questions</h1><p>No generated questions are available yet.</p><button className="btn-secondary-cancel" onClick={() => onNavigate('dashboard')}>Back to dashboard</button></div>;
-  if (!currentQ) return <div className="main-wrapper"><p>Loading generated questions…</p></div>;
 
   const handleAnswerChange = (val) => {
     updateQuestion(currentTask.id, currentQ.id, {
@@ -38,12 +31,15 @@ export const CodeQuestionsView = ({ onNavigate }) => {
 
   const handleSaveDraft = async () => {
     const currentAnswer = currentQ.answer ? currentQ.answer.trim() : '';
-    setBusy(true); try { await saveQuestionDraft(currentTask.id, currentQ.id, currentAnswer); } catch (error) { setAppError(error.message); } finally { setBusy(false); }
+    if (!currentAnswer) return;
+    try { await saveQuestionDraft(currentTask.id, currentQ.id, currentAnswer); } catch (error) { alert(error.message); }
   };
 
   const handleSaveAndNext = async () => {
     const currentAnswer = currentQ.answer ? currentQ.answer.trim() : '';
-    setBusy(true); try { await saveQuestionDraft(currentTask.id, currentQ.id, currentAnswer); } catch (error) { setAppError(error.message); setBusy(false); return; } finally { setBusy(false); }
+    if (!currentAnswer) return;
+    if (!currentAnswer) { alert('Enter an answer before continuing.'); return; }
+    try { await saveQuestionDraft(currentTask.id, currentQ.id, currentAnswer); } catch (error) { alert(error.message); return; }
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -59,9 +55,15 @@ export const CodeQuestionsView = ({ onNavigate }) => {
   const completedCount = questions.filter((q) => q.isSaved === true).length;
 
   const handleSubmitAll = async () => {
-    if (completedCount !== questions.length) { setAppError(`Save all ${questions.length} answers before submitting (${completedCount} saved).`); return; }
-    setBusy(true); try { await submitAllQuestions(currentTask.id); onNavigate('dashboard'); } catch (error) { setAppError(error.message); } finally { setBusy(false); }
+    if (completedCount < questions.length) {
+      alert(`Save an answer for every question first (${completedCount} of ${questions.length} saved).`);
+      return;
+    } else {
+      try { await submitAllQuestions(currentTask.id); onNavigate('dashboard'); } catch (error) { alert(error.message); }
+    }
   };
+
+  if (!currentTask || !questions.length) return <div className="main-wrapper"><h1 className="page-title">Questions about your code</h1><p className="page-subtitle">Questions will appear here after your submission has been processed.</p><button className="btn-secondary-cancel" onClick={() => onNavigate('dashboard')}>Back to dashboard</button></div>;
 
   return (
     <div className="main-wrapper">
@@ -80,7 +82,7 @@ export const CodeQuestionsView = ({ onNavigate }) => {
       {/* Header with counter */}
       <div className="question-page-header">
         <h1 className="page-title" style={{ margin: 0 }}>Questions about your code</h1>
-          <span className="question-counter-indicator">Question {currentIndex + 1} of {questions.length}</span>
+        <span className="question-counter-indicator">Question {currentIndex + 1} of {questions.length}</span>
       </div>
 
       {/* 6-Step Multi-segment Progress Bar: green for saved questions */}
@@ -204,7 +206,7 @@ export const CodeQuestionsView = ({ onNavigate }) => {
               </button>
 
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button disabled={busy}
+                <button 
                   type="button" 
                   className="btn-secondary-cancel"
                   onClick={handleSaveDraft}
@@ -212,7 +214,7 @@ export const CodeQuestionsView = ({ onNavigate }) => {
                   Save draft
                 </button>
 
-                <button disabled={busy}
+                <button 
                   type="button" 
                   className="btn-primary-submit"
                   onClick={handleSaveAndNext}
@@ -272,7 +274,6 @@ export const CodeQuestionsView = ({ onNavigate }) => {
             type="button" 
             className="btn-submit-all-answers"
             onClick={handleSubmitAll}
-            disabled={busy || completedCount !== questions.length}
           >
             Submit all answers
           </button>

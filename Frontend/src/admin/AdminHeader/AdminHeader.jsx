@@ -2,10 +2,14 @@ import React from 'react';
 import './AdminHeader.css';
 import { useApp } from '../../context/AppContext.jsx';
 
-export const AdminHeader = ({ activeTab, onSelectTab, onLogout, role = 'FACULTY' }) => {
+export const AdminHeader = ({ activeTab, onSelectTab, onLogout, role }) => {
   const { currentUser } = useApp();
-  const fullName = currentUser?.fullName || currentUser?.username || '';
-  const roleLabel = role === 'TA' ? 'Teaching assistant' : 'Faculty';
+  const adminUser = {
+    fullName: currentUser?.fullName || currentUser?.username || 'User',
+    name: currentUser?.first_name || currentUser?.fullName?.split(' ')[0] || 'there',
+    role: currentUser?.role === 'TA' ? 'Teaching Assistant' : 'Faculty',
+    avatar: currentUser?.avatar || 'U',
+  };
   return (
     <header className="admin-header">
       <div className="admin-header-left">
@@ -23,13 +27,7 @@ export const AdminHeader = ({ activeTab, onSelectTab, onLogout, role = 'FACULTY'
           <span className="admin-brand-name">Competency Assessor</span>
         </div>
 
-        <nav className="admin-nav-tabs">
-          {role === 'TA' ? (
-            <button className={`admin-nav-tab-btn ${activeTab === 'review' ? 'active' : ''}`} onClick={() => onSelectTab('review')}>
-              Assessments
-            </button>
-          ) : (
-            <>
+        {role !== 'TA' && <nav className="admin-nav-tabs">
           <button 
             className={`admin-nav-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => onSelectTab('overview')}
@@ -64,19 +62,17 @@ export const AdminHeader = ({ activeTab, onSelectTab, onLogout, role = 'FACULTY'
           >
             Audit log
           </button>
-            </>
-          )}
-        </nav>
+        </nav>}
       </div>
 
       <div className="admin-header-right">
         <div className="admin-user-info">
-          <div className="admin-user-name">{fullName}</div>
-          <div className="admin-user-role">{roleLabel}</div>
+          <div className="admin-user-name">{adminUser.fullName}</div>
+          <div className="admin-user-role">{adminUser.role}</div>
         </div>
 
-        <div className="admin-avatar-badge" title={fullName}>
-          {currentUser?.avatar}
+        <div className="admin-avatar-badge" title={adminUser.fullName}>
+          {adminUser.avatar}
         </div>
 
         <button 

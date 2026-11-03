@@ -151,6 +151,7 @@ The API is rooted at `/api/`; JWT authentication endpoints are under `/api/auth/
 - Submissions and processing: `/api/submissions/`, including processing, status, retrieval, and question-generation actions.
 - Assessments: `/api/assessment-runs/`, `/api/questions/`, plus answer, evaluation, review, and scoring actions.
 - Reports: `/api/reports/`, including preparation and publishing actions.
+- Audit events: read-only `/api/audit-events/`, scoped to the caller's role and batch assignments.
 - Django admin: `/admin/`.
 
 Exact methods, filters, and access rules are defined by the backend routes and viewsets.
@@ -192,3 +193,7 @@ Copy the `.env.example` template for each app to a local `.env` and set only val
 - AI processing requires a configured external provider and available quota; provider errors can delay or fail AI-dependent jobs. No model is bundled with the project.
 - Gitea credentials and authenticated repository access are not configured.
 - Frontend and backend should be deployed behind suitable production web servers with secure environment configuration before real use.
+
+## Local demonstration data
+
+To create demonstration records on a local database, run the explicit development-only command described in [Backend/README.md](Backend/README.md#local-demo-data). It is not run automatically on server startup. The command refuses to run with `DEBUG=False`; its temporary demo credentials are for local testing only.

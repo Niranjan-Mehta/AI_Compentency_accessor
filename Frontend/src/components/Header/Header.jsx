@@ -3,7 +3,7 @@ import './Header.css';
 import { useApp } from '../../context/AppContext.jsx';
 
 export const Header = ({ currentView, onNavigate, onLogout }) => {
-  const { currentUser } = useApp();
+  const { currentUser, refreshWorkspace } = useApp();
 
   return (
     <header className="top-header">
@@ -39,7 +39,7 @@ export const Header = ({ currentView, onNavigate, onLogout }) => {
 
           <button 
             className="nav-tab-btn"
-            onClick={() => alert('For help with a rubric or submission, contact your assigned faculty member or teaching assistant.')}
+            onClick={() => alert('Help desk contact information is not configured. Please contact your faculty.')}
           >
             Help
           </button>
@@ -50,7 +50,7 @@ export const Header = ({ currentView, onNavigate, onLogout }) => {
 
         <div className="user-info">
           <div className="user-name">{currentUser.fullName}</div>
-          <div className="user-role">{currentUser.role}</div>
+          <div className="user-role">{currentUser.roleLabel || currentUser.role}</div>
         </div>
 
         <div className="avatar-badge" title={currentUser.fullName}>

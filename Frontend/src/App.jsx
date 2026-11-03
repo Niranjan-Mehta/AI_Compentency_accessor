@@ -12,6 +12,7 @@ import { AdminBatchesView } from './admin/AdminBatchesView/AdminBatchesView.jsx'
 import { AdminCreateTaskView } from './admin/AdminCreateTaskView/AdminCreateTaskView.jsx';
 import { AdminRubricsView } from './admin/AdminRubricsView/AdminRubricsView.jsx';
 import { AdminReportsView } from './admin/AdminReportsView/AdminReportsView.jsx';
+import { AdminAuditLogView } from './admin/AdminAuditLogView/AdminAuditLogView.jsx';
 import { TAAssessmentView } from './components/TAAssessmentView/TAAssessmentView.jsx';
 import { EvaluationFeedbackView } from './components/EvaluationFeedbackView/EvaluationFeedbackView.jsx';
 
@@ -46,7 +47,7 @@ function MainApp() {
           {facultyTab === 'create-task' && <AdminCreateTaskView onNavigateTab={setFacultyTab} />}
           {facultyTab === 'rubrics' && <AdminRubricsView onNavigateTab={setFacultyTab} />}
           {facultyTab === 'reports' && <AdminReportsView onNavigateTab={setFacultyTab} />}
-          {facultyTab === 'audit-log' && <div className="main-wrapper"><h1 className="page-title">Audit log</h1><p className="page-subtitle">Audit events are available in Django admin for this MVP.</p></div>}
+          {facultyTab === 'audit-log' && <AdminAuditLogView onNavigateTab={setFacultyTab} />}
         </main>
       </div>
     );

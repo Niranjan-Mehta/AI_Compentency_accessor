@@ -1,28 +1,448 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './AdminReportsView.css';
 import { useApp } from '../../context/AppContext.jsx';
 
-export const AdminReportsView = () => {
-  const { api, reports, assessments, submissions, tasks, batches, refreshWorkspace, setAppError, setNotice } = useApp();
-  const [selected, setSelected] = useState(null); const [busy, setBusy] = useState(false); const [batchFilter, setBatchFilter] = useState(''); const [statusFilter, setStatusFilter] = useState('');
-  const prepare = async (run) => { setBusy(true); try { await api.request('/reports/prepare/', { method: 'POST', body: JSON.stringify({ assessment_run_id: run.id }) }); await refreshWorkspace(); setNotice('Report snapshot prepared for faculty review.'); } catch (e) { setAppError(e.message); } finally { setBusy(false); } };
-  const publish = async (report) => { setBusy(true); try { await api.request(`/reports/${report.id}/publish/`, { method: 'POST' }); await refreshWorkspace(); setNotice('Report published to the trainee.'); } catch (e) { setAppError(e.message); } finally { setBusy(false); } };
-  const rows = Object.values(reports);
-  const submissionRows = submissions.filter((submission) => {
-    const task = tasks.find((item) => item.id === submission.task?.id);
-    return (!batchFilter || task?.batches?.some((batch) => String(batch.id) === batchFilter)) && (!statusFilter || submission.status === statusFilter);
-  });
-  return <div className="admin-reports-container"><h1 className="page-title">Assessments and reports</h1><p className="page-subtitle">Review completed assessments, prepare immutable report snapshots, then publish.</p>
-    <section className="admin-table-card" style={{ padding: 18, marginBottom: 22 }}><h2>Submissions</h2><div className="admin-table-filters-row"><select className="admin-filter-dropdown" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}><option value="">All batches</option>{batches.map((batch) => <option key={batch.id} value={batch.id}>{batch.name}</option>)}</select><select className="admin-filter-dropdown" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="">All statuses</option>{['SUBMITTED','PROCESSING','QUESTIONS_READY','ANSWERS_SUBMITTED','UNDER_REVIEW','PUBLISHED','FAILED'].map((s) => <option key={s}>{s}</option>)}</select></div><table className="admin-data-table"><thead><tr><th>Trainee</th><th>Task</th><th>Branch</th><th>Status</th><th>Submitted</th><th>Repository</th></tr></thead><tbody>{submissionRows.map((submission) => <tr key={submission.id}><td>{submission.trainee_name || submission.trainee?.username || `#${submission.trainee_id || ''}`}</td><td>{submission.task?.title}</td><td>{submission.branch}</td><td>{submission.status}</td><td>{submission.submitted_at ? new Date(submission.submitted_at).toLocaleString() : '—'}</td><td><a href={submission.repository_url} target="_blank" rel="noreferrer">Open</a></td></tr>)}{!submissionRows.length && <tr><td colSpan="6">No submissions match these filters.</td></tr>}</tbody></table></section>
-    <section className="admin-table-card" style={{ padding: 18, marginBottom: 22 }}><h2>Completed assessments</h2><table className="admin-data-table"><thead><tr><th>Trainee</th><th>Task</th><th>Run</th><th>Action</th></tr></thead><tbody>{assessments.map((run) => <tr key={run.id}><td>{run.trainee_name || run.trainee_id}</td><td>{run.task_title}</td><td>#{run.id}</td><td><button className="admin-btn-secondary" onClick={() => setSelected({ type: 'run', item: run })}>View evaluation</button> <button className="admin-btn-primary" disabled={busy} onClick={() => prepare(run)}>Prepare report</button></td></tr>)}{!assessments.length && <tr><td colSpan="4">No completed assessments available yet.</td></tr>}</tbody></table></section>
-    <section className="admin-table-card" style={{ padding: 18 }}><h2>Reports</h2><table className="admin-data-table"><thead><tr><th>Trainee</th><th>Task</th><th>Batch</th><th>Score</th><th>Level</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map((report) => <tr key={report.id}><td>{report.trainee_name}</td><td>{report.task_title}</td><td>{report.batch_name}</td><td>{report.overall_score}%</td><td>{report.competency_level}</td><td>{report.status}</td><td><button className="admin-btn-secondary" onClick={() => setSelected({ type: 'report', item: report })}>Review snapshot</button> {report.status === 'DRAFT' && <button className="admin-btn-primary" disabled={busy} onClick={() => publish(report)}>Publish</button>}</td></tr>)}{!rows.length && <tr><td colSpan="7">No reports prepared yet.</td></tr>}</tbody></table></section>
-    {selected && <div role="dialog" aria-modal="true" className="admin-modal-overlay"><div className="admin-modal-dialog" style={{ maxWidth: 820, maxHeight: '85vh', overflow: 'auto' }}><button className="admin-modal-close-btn" onClick={() => setSelected(null)}>Close</button><h2>{selected.type === 'run' ? `Assessment: ${selected.item.task_title}` : `Report: ${selected.item.task_title}`}</h2>{selected.type === 'report' ? <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(selected.item.snapshot, null, 2)}</pre> : <AssessmentReview run={selected.item} api={api}/>}</div></div>}
-  </div>;
-};
+export function AdminReportsView({ onNavigateTab }) {
+  const { reports, assessments, api, setAppError, setNotice, refreshWorkspace } = useApp();
+  const [trainees, setTrainees] = useState([]);
 
-function AssessmentReview({ run, api }) {
-  const [result, setResult] = useState(null); const [error, setError] = useState('');
-  React.useEffect(() => { Promise.all([api.request(`/assessment-runs/${run.id}/evaluation/`), api.all(`/questions/?submission_id=${run.submission_id}`)]).then(([data, questions]) => { const byId = Object.fromEntries(questions.map((item) => [item.id, item])); data.evaluations = data.evaluations.map((item) => ({ ...item, question: byId[item.question_id]?.question_text || `Question ${item.question_id}` })); setResult(data); }).catch((e) => setError(e.message)); }, [run.id]);
-  if (error) return <p role="alert">{error}</p>; if (!result) return <p>Loading evaluation…</p>;
-  return <div><p>Overall: {result.overall_final_score}% · {result.overall_final_level} · TA review {result.review_status}</p><h3>Criteria</h3>{result.criteria?.map((criterion) => <p key={criterion.criterion_id}><strong>{criterion.criterion_name}:</strong> {criterion.score}/{criterion.max_score} ({criterion.level}) {criterion.override_reason && <span>— TA note: {criterion.override_reason}</span>}</p>)}<h3>Question feedback</h3>{result.evaluations?.map((item) => <article key={item.question_id} style={{ padding: 12, borderTop: '1px solid #ddd' }}><strong>{item.question}</strong><p>{item.explanation}</p><p>Evidence: {item.evidence?.map((ev) => `${ev.file_path || ev.source_type}${ev.start_line ? `:${ev.start_line}` : ''}`).join(', ')}</p></article>)}</div>;
+
+  const [selectedTraineeId, setSelectedTraineeId] = useState('');
+  const [toastNotice, setToastNotice] = useState(null);
+  const [traineePreviewModal, setTraineePreviewModal] = useState(null);
+
+  // Active selected trainee
+  useEffect(() => { setTrainees(Object.values(reports).map((report) => { const snap = report.snapshot || {}; const override = snap.ta_review?.overrides?.[0]; const overriddenCriterion = snap.criteria?.find((criterion) => criterion.criterion_id === override?.criterion_id); return { id: report.id, reportId: report.id, name: report.trainee_name || snap.trainee?.name || 'Trainee', taskName: report.task_title || snap.task?.title || 'Assessment', batchName: report.batch_name || snap.batch?.name || 'Batch', overallScore: `${report.overall_score}%`, level: report.competency_level, submittedDate: report.created_at ? new Date(report.created_at).toLocaleDateString() : '—', commitHash: '—', published: report.status === 'PUBLISHED', statusType: report.status === 'PUBLISHED' ? 'published' : 'approved', statusLabel: report.status, hasDispute: false, hasOverride: Boolean(override), overrideDetails: override ? { fromScore: `${overriddenCriterion?.ai_score || '—'}/${overriddenCriterion?.max_score || '—'}`, toScore: `${overriddenCriterion?.score || '—'}/${overriddenCriterion?.max_score || '—'}`, taName: override.reviewer || 'TA', statement: override.reason || 'Reviewed score override.' } : null, criteria: (snap.criteria || []).map((c) => ({ name: c.name, aiScore: `${c.ai_score}/${c.max_score}`, taScore: `${c.score}/${c.max_score}`, status: c.overridden_by ? 'Overridden' : 'Reviewed', statusType: c.overridden_by ? 'overridden' : 'agreed' })), disputeResolved: false }; })); }, [reports]);
+  useEffect(() => { if (!selectedTraineeId && trainees.length) setSelectedTraineeId(trainees[0].id); }, [selectedTraineeId, trainees]);
+  const currentTrainee = trainees.find(t => t.id === selectedTraineeId) || trainees[0] || { id: '', name: 'No reports available', taskName: '—', batchName: '—', overallScore: '—', level: '—', submittedDate: '—', commitHash: '—', published: false, statusType: 'draft', statusLabel: 'No report', hasDispute: false, hasOverride: false, criteria: [] };
+
+  // Forms state for current trainee's dispute - text boxes blank by default
+  const [disputeDecision, setDisputeDecision] = useState('change');
+  const [disputeNewScore, setDisputeNewScore] = useState('');
+  const [disputeReason, setDisputeReason] = useState('');
+
+  // Ready to publish count (approved or resolved, and not yet published)
+  const readyToPublishCount = trainees.filter(t => !t.published && t.statusType === 'approved').length;
+  const unpreparedRuns = assessments.filter((run) => !Object.values(reports).some((report) => report.assessment_run_id === run.id));
+  const handlePrepareReport = async (run) => { try { await api.request('/reports/prepare/', {method:'POST',body:JSON.stringify({assessment_run_id:run.id})}); await refreshWorkspace(); setNotice(`Report prepared for ${run.trainee_name || 'trainee'} · ${run.task_title}.`); } catch (error) { setAppError(error.message); } };
+
+  // Handle saving dispute decision
+  const handleSaveDecision = () => setAppError('Dispute decisions are not supported by the backend yet; no report score was changed.');
+
+  // Handle confirming override for Anita
+  const handleConfirmOverride = () => setNotice('Existing TA score overrides are reflected in the report snapshot.');
+
+  // Handle single trainee publish
+  const handlePublishSingle = async (reportId) => { try { await api.request(`/reports/${reportId}/publish/`, {method:'POST'}); await refreshWorkspace(); setToastNotice({type:'success',message:`Report for ${currentTrainee.name} was published.`}); } catch (error) { setAppError(error.message); } };
+
+  // Handle bulk publish
+  const handlePublishBulkReady = async () => {
+    for (const report of trainees.filter((t) => !t.published && t.statusType === 'approved')) { try { await api.request(`/reports/${report.reportId}/publish/`, {method:'POST'}); } catch (error) { setAppError(error.message); return; } }
+    await refreshWorkspace();
+
+    setToastNotice({
+      type: 'success',
+      message: `Published ${readyToPublishCount} ready reports to trainees successfully!`
+    });
+    setTimeout(() => setToastNotice(null), 3500);
+  };
+
+  return (
+    <div className="admin-reports-container">
+      {/* Breadcrumb Navigation */}
+      <div className="admin-reports-breadcrumb">
+        <span 
+          className="admin-reports-breadcrumb-link"
+          onClick={() => onNavigateTab && onNavigateTab('overview')}
+        >
+          Reports
+        </span>
+        <span className="admin-reports-breadcrumb-separator">&gt;</span>
+        <span className="admin-reports-breadcrumb-current">{currentTrainee.taskName}</span>
+      </div>
+
+      {/* Page Header */}
+      <div className="admin-reports-header-row">
+        <div className="admin-reports-header-left">
+          <h1 className="admin-reports-title">Review and publish</h1>
+          <p className="admin-reports-subtitle">
+            {currentTrainee.batchName}. {readyToPublishCount} reports ready for publication. Trainees see only published reports.
+          </p>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            className="admin-btn-publish-batch"
+            disabled={readyToPublishCount === 0}
+            onClick={handlePublishBulkReady}
+          >
+            Publish {readyToPublishCount} ready reports
+          </button>
+        </div>
+      </div>
+
+      {unpreparedRuns.length > 0 && <section className="admin-section-box" style={{marginBottom:20}} aria-label="Completed assessments ready for report preparation"><h2 className="admin-section-heading">Prepare reviewed assessments</h2><div className="admin-decision-items-list">{unpreparedRuns.map((run) => <div key={run.id} className="admin-decision-item"><div className="admin-decision-item-left"><div className="admin-decision-content"><span className="admin-decision-title">{run.task_title}</span><span className="admin-decision-subtitle">{run.trainee_name || `Trainee #${run.trainee_id}`} · Completed {new Date(run.updated_at).toLocaleDateString()}</span></div></div><button type="button" className="admin-decision-action-btn dark" onClick={() => handlePrepareReport(run)}>Prepare report</button></div>)}</div></section>}
+
+      {/* Notification Toast */}
+      {toastNotice && (
+        <div style={{
+          backgroundColor: toastNotice.type === 'success' ? '#ecfdf5' : '#eff6ff',
+          border: `1.5px solid ${toastNotice.type === 'success' ? '#10b981' : '#3b82f6'}`,
+          borderRadius: '8px',
+          padding: '12px 18px',
+          marginBottom: '20px',
+          color: toastNotice.type === 'success' ? '#065f46' : '#1e40af',
+          fontSize: '13.5px',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span>{toastNotice.type === 'success' ? '✓ ' : 'ℹ '}{toastNotice.message}</span>
+          <button
+            type="button"
+            onClick={() => setToastNotice(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Main 2-Column Grid */}
+      <div className="admin-reports-grid">
+        {/* Left Column: Trainees List */}
+        <aside className="admin-reports-trainee-list">
+          {trainees.map((t) => {
+            const isSelected = t.id === currentTrainee.id;
+            return (
+              <div
+                key={t.id}
+                className={`admin-reports-trainee-item ${isSelected ? 'active' : ''}`}
+                onClick={() => setSelectedTraineeId(t.id)}
+              >
+                <span className="admin-reports-trainee-name">{t.name}</span>
+                <span className={`admin-trainee-item-pill ${t.statusType}`}>
+                  {t.statusType === 'dispute' && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  )}
+                  {t.statusType === 'override' && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 14 14" />
+                    </svg>
+                  )}
+                  {t.statusType === 'approved' && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                  {t.statusLabel}
+                </span>
+              </div>
+            );
+          })}
+        </aside>
+
+        {/* Right Column: Detailed Review Area */}
+        <div className="admin-reports-detail-col">
+          <div className="admin-trainee-detail-card">
+            {/* Header: Trainee Info & Link */}
+            <div className="admin-detail-header-row">
+              <div className="admin-detail-title-group">
+                <h2 className="admin-detail-name">{currentTrainee.name}</h2>
+                <p className="admin-detail-subtext">
+                  Overall {currentTrainee.overallScore}, {currentTrainee.level}. Submitted {currentTrainee.submittedDate} on commit {currentTrainee.commitHash}.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-preview-trainee-link"
+                onClick={() => setTraineePreviewModal(currentTrainee)}
+              >
+                Preview as trainee
+              </button>
+            </div>
+
+            {/* Scores Table */}
+            <div className="admin-scores-table-container">
+              <table className="admin-scores-table">
+                <thead>
+                  <tr>
+                    <th>Criterion</th>
+                    <th>AI score</th>
+                    <th>TA score</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentTrainee.criteria.map((crit, idx) => (
+                    <tr key={idx}>
+                      <td style={{ fontWeight: 600 }}>{crit.name}</td>
+                      <td>{crit.aiScore}</td>
+                      <td>{crit.taScore}</td>
+                      <td>
+                        <span className={`admin-status-badge ${crit.statusType}`}>
+                          {crit.statusType === 'agreed' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                          {crit.statusType === 'disputed' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                            </svg>
+                          )}
+                          {crit.statusType === 'overridden' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="23 4 23 10 17 10" />
+                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                            </svg>
+                          )}
+                          {crit.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Dispute Decision Box (for Ravi Kumar or active disputes) */}
+            {currentTrainee.hasDispute && (
+              <div className="admin-decision-box">
+                <div className="admin-decision-box-header">
+                  <div className="admin-decision-header-left">
+                    <span className="admin-decision-p-badge">P</span>
+                    <span className="admin-decision-title">
+                      {currentTrainee.name} disputes {currentTrainee.disputeDetails.criterion}, {currentTrainee.disputeDetails.score}
+                    </span>
+                  </div>
+                  <span className="admin-decision-deadline">
+                    Raised {currentTrainee.disputeDetails.raisedDate}, {currentTrainee.disputeDetails.daysLeft}
+                  </span>
+                </div>
+
+                {/* Trainee quote */}
+                <div className="admin-dispute-quote-box">
+                  {currentTrainee.disputeDetails.statement}
+                </div>
+
+                {/* Radio Options */}
+                <div className="admin-decision-options-group">
+                  <span className="admin-decision-options-label">Your decision</span>
+                  <div className="admin-radio-options-row">
+                    <label 
+                      className="admin-radio-item"
+                      onClick={() => setDisputeDecision('keep')}
+                    >
+                      <input
+                        type="radio"
+                        name="decision"
+                        checked={disputeDecision === 'keep'}
+                        onChange={() => setDisputeDecision('keep')}
+                      />
+                      <span>Keep 2 / 5</span>
+                    </label>
+
+                    <label 
+                      className="admin-radio-item"
+                      onClick={() => setDisputeDecision('change')}
+                    >
+                      <input
+                        type="radio"
+                        name="decision"
+                        checked={disputeDecision === 'change'}
+                        onChange={() => setDisputeDecision('change')}
+                      />
+                      <span>Change to</span>
+                      <input
+                        type="text"
+                        className="admin-radio-input-box"
+                        value={disputeNewScore}
+                        onChange={(e) => setDisputeNewScore(e.target.value)}
+                        maxLength={1}
+                      />
+                      <span>/ 5</span>
+                    </label>
+
+                    <label 
+                      className="admin-radio-item"
+                      onClick={() => setDisputeDecision('rerun')}
+                    >
+                      <input
+                        type="radio"
+                        name="decision"
+                        checked={disputeDecision === 'rerun'}
+                        onChange={() => setDisputeDecision('rerun')}
+                      />
+                      <span>Rerun on new commit</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Reason Field */}
+                <div className="admin-decision-reason-group">
+                  <label className="admin-decision-reason-label">
+                    Reason (the trainee will see this)
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-decision-reason-input"
+                    value={disputeReason}
+                    onChange={(e) => setDisputeReason(e.target.value)}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="admin-decision-buttons-row">
+                  <button
+                    type="button"
+                    className="admin-btn-save-decision"
+                    onClick={handleSaveDecision}
+                  >
+                    Save decision
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn-ask-ta"
+                    onClick={() => setNotice('Messaging is not configured; no message was sent.')}
+                  >
+                    Ask TA first
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TA Override Box (for Anita R.) */}
+            {currentTrainee.hasOverride && (
+              <div className="admin-decision-box">
+                <div className="admin-decision-box-header">
+                  <div className="admin-decision-header-left">
+                    <span className="admin-decision-p-badge" style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}>O</span>
+                    <span className="admin-decision-title">
+                      TA raised a Testing score: {currentTrainee.overrideDetails.fromScore} changed to {currentTrainee.overrideDetails.toScore} by {currentTrainee.overrideDetails.taName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="admin-dispute-quote-box">
+                  {currentTrainee.overrideDetails.statement}
+                </div>
+
+                <div className="admin-decision-buttons-row">
+                  <button
+                    type="button"
+                    className="admin-btn-save-decision"
+                    onClick={handleConfirmOverride}
+                  >
+                    Confirm override
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn-ask-ta"
+                    onClick={() => setNotice('Score overrides cannot be reverted from this page. No score was changed.')}
+                  >
+                    Revert to AI score
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Footer Publish Single Trainee */}
+            <div className="admin-trainee-publish-footer">
+              <button
+                type="button"
+                className="admin-btn-publish-single"
+                disabled={
+                  currentTrainee.published || 
+                  (currentTrainee.hasDispute && !currentTrainee.disputeResolved)
+                }
+                onClick={() => handlePublishSingle(currentTrainee.id)}
+              >
+                {currentTrainee.published ? 'Report published' : 'Publish report'}
+              </button>
+
+              {currentTrainee.hasDispute && !currentTrainee.disputeResolved && (
+                <span className="admin-publish-requirement-hint">
+                  Save a decision on the dispute to publish this report.
+                </span>
+              )}
+
+              {currentTrainee.published && (
+                <span className="admin-publish-requirement-hint" style={{ color: '#047857', fontWeight: 600 }}>
+                  ✓ This report is live and visible on the trainee dashboard.
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trainee Preview Modal */}
+      {traineePreviewModal && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="modal-dialog" style={{ maxWidth: '580px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 className="modal-dialog-title" style={{ margin: 0 }}>
+                  Student View Preview: {traineePreviewModal.name}
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                  Task: {traineePreviewModal.taskName} • Level: {traineePreviewModal.level}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-remove-file"
+                onClick={() => setTraineePreviewModal(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="modal-dialog-desc">
+              This preview shows the finalized scorecard as it will be seen by the student trainee upon publishing:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              {traineePreviewModal.criteria.map((c, i) => (
+                <div 
+                  key={i} 
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    padding: '10px 14px', 
+                    borderRadius: '6px', 
+                    border: '1.5px solid var(--border-color, #60a5fa)',
+                    backgroundColor: '#ffffff'
+                  }}
+                >
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{c.name}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#2563eb' }}>{c.taScore}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="modal-buttons-row">
+              <button
+                type="button"
+                className="btn-primary-submit"
+                onClick={() => setTraineePreviewModal(null)}
+                style={{ width: '100%' }}
+              >
+                Close preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
